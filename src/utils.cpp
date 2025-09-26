@@ -1,6 +1,8 @@
 #include <hook.h>
 
-static void MemWrite(void* addr, const void* data, size_t len) {
+namespace utils {
+
+void MemWrite(void* addr, const void* data, size_t len) {
     DWORD old;
     VirtualProtect(addr, len, PAGE_EXECUTE_READWRITE, &old);
     std::memcpy(addr, data, len);
@@ -8,7 +10,7 @@ static void MemWrite(void* addr, const void* data, size_t len) {
     FlushInstructionCache(GetCurrentProcess(), addr, len);
 }
 
-static void MemFillNop(void* addr, size_t len) {
+void MemFillNop(void* addr, size_t len) {
     BYTE* p = reinterpret_cast<BYTE*>(addr);
     DWORD old;
     VirtualProtect(addr, len, PAGE_EXECUTE_READWRITE, &old);
@@ -17,7 +19,7 @@ static void MemFillNop(void* addr, size_t len) {
     FlushInstructionCache(GetCurrentProcess(), addr, len);
 }
 
-static void JumpRel32(void* src, void* dst, size_t len) {
+void JumpRel32(void* src, void* dst, size_t len) {
     BYTE* p = reinterpret_cast<BYTE*>(src);
     intptr_t rel = (BYTE*)dst - (p + 5);
     BYTE buf[5] = { 0xE9 };
@@ -26,8 +28,9 @@ static void JumpRel32(void* src, void* dst, size_t len) {
     if (len > 5) MemFillNop(p + 5, len - 5);
 }
 
-// Kullanýlan imza ile uyumlu minimal Hook
-static inline void Hook(void* at, void* tramp, size_t len) {
+void Hook(void* at, void* tramp, size_t len) {
     JumpRel32(at, tramp, len);
 }
+
+} // namespace utils
 
