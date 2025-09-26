@@ -36,7 +36,7 @@ static __declspec(naked) void weapon_skin() {
         jmp weapon_skin_retn
 
             jepart:
-            mov[eax + ecx + 0x1DA], dl
+            mov[eax + ecx + 0x1CA], dl
             movzx edx, byte ptr[esp + 0x18]
             mov ecx, [esi + 0xE34C]
             mov[eax + ecx + 0x1B9], dl
@@ -58,8 +58,7 @@ static __declspec(naked) void weapon_skin() {
 
 void Itemmall() 
 {
-
-    utils::Hook((void*)0x4F4193, char_view, 5);
-    utils::Hook((void*)0x4F4232, weapon_skin, 7);
+    utils::Hook((LPVOID)0x4F4193, char_view, 5);
+    utils::Hook((LPVOID)0x4F4232, weapon_skin, 7);
 }
 

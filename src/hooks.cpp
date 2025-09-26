@@ -1,7 +1,12 @@
 #include "hook.h"
 
 
+
 void Itemmall();
+void Network();
+void Buff_Icons();
+void Slots();
+void Load();
 
 
 // ───────────────────────────────
@@ -42,6 +47,10 @@ void StartHooks()
     DetourTransactionCommit();
     // Oyun içi inline patchler
     Itemmall();
+    Network();
+    //Buff_Icons();
+    Slots();
+    Load();
 }
 
 void StopHooks()

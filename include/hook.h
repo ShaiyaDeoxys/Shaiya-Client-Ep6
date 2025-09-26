@@ -13,6 +13,8 @@
 #define HOOK_ATTACH(realFnPtr, detourFn)  DetourAttach(reinterpret_cast<PVOID*>(realFnPtr), reinterpret_cast<PVOID>(detourFn))
 #define HOOK_DETACH(realFnPtr, detourFn)  DetourDetach(reinterpret_cast<PVOID*>(realFnPtr), reinterpret_cast<PVOID>(detourFn))
 
+
+
 // API export ismiyle hook (ör. MessageBoxW gibi)
 #define DECL_HOOK_API(ret, callcv, name, ...)            \
     extern ret (callcv * Real_##name)(__VA_ARGS__);       \
@@ -34,8 +36,5 @@ void StopHooks();
 // ───────────────────────────────
 DECL_HOOK_API(int, WINAPI, MessageBoxW, HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType)
 
-// ───────────────────────────────
-// Örnek: Adres tabanlı hook şablon deklarasyonu
-// (Gerçek adresi kendi oyunun adresiyle değiştirip aktif edebilirsin.)
-// ───────────────────────────────
-// DECL_HOOK_ADDR(BOOL, __cdecl, ExampleFunc, 0x00401000, int a, const char* s)
+
+
