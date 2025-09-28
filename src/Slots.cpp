@@ -184,7 +184,7 @@ void Slots()
 
 	utils::MemWrite((LPVOID)(0x4E8255 + 1), max_slot, 1);
 	utils::MemWrite((LPVOID)(0x4FEC1A + 1), max_slot, 1);
-	//utils::MemWrite((LPVOID)(0x4F4195 + 2), max_slot, 1); // Comes from itemmall fix
+	utils::MemWrite((LPVOID)(0x4F4195 + 2), max_slot, 1); // Comes from itemmall fix
 
 	utils::Hook((LPVOID)0x5183D0, inventory_item_equipment, 7);
 	utils::Hook((LPVOID)0x51A212, inventory_item_equipment_mouse_over, 6);
