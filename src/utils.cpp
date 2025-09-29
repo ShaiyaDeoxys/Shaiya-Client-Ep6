@@ -34,6 +34,14 @@ namespace utils {
         JumpRel32(at, tramp, len);
     }
 
+    void PatchByte(void* addr, BYTE value) {
+        DWORD old;
+        VirtualProtect(addr, 1, PAGE_EXECUTE_READWRITE, &old);
+        *reinterpret_cast<BYTE*>(addr) = value;
+        VirtualProtect(addr, 1, old, &old);
+    }
+
+
 } 
 
 char alloc_new_dds_1[16];
