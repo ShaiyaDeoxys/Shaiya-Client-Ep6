@@ -1,4 +1,4 @@
-#include <hook.h>
+﻿#include <hook.h>
 
 // ===== Addresses (same as your working build) =====
 #define ADDR_HOOK_TYPEWRITE      0x004F4224 
@@ -193,7 +193,7 @@ __declspec(naked) void tramp_show_mount_tab1_v2()
 
 
         load_mount :
-        mov ecx, [edi + 0x90]
+            mov ecx, [edi + 0x90]
             xor edx, edx
             push ecx
             mov byte ptr[esp + 0x2C], 0xFF   // -1

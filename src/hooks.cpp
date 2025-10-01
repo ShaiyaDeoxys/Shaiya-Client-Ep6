@@ -48,7 +48,7 @@ void StartHooks()
     // Oyun içi inline patchler
     Itemmall();
     Network();
-    //Buff_Icons();
+    Buff_Icons();
     Slots();
     Load();
 }

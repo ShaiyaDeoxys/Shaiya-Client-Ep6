@@ -40,7 +40,7 @@ _declspec(naked) void login_port()
 
 void Network() {
 	utils::Hook((LPVOID)0x4092D2, write_login_ip_addr, 5);
-	//Write((LPVOID)0x5EC71F, select_server_packet, 5);
+	utils::MemWrite((LPVOID)0x5EC71F, select_server_packet, 5);
 	utils::MemWrite((LPVOID)0x50C7A9, game_port, 5);
 	utils::MemWrite((LPVOID)0x40AD62, login_port, 5);
 	utils::MemWrite((LPVOID)0x48BE9E, login_port, 5);
