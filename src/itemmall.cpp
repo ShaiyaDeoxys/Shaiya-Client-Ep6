@@ -1,4 +1,4 @@
-﻿#include <hook.h>
+#include <hook.h>
 
 // ===== Addresses (same as your working build) =====
 #define ADDR_HOOK_TYPEWRITE      0x004F4224 
@@ -25,7 +25,7 @@ __declspec(align(1)) static unsigned char g_mapLight[16] =
 __declspec(align(1)) static unsigned char g_mapFury[16] =
 { 0, 45,46,47,48,49,52,54,56,57,58,59,61,63,59,65 };
 
-__declspec(naked) void weapon_skin_map()
+__declspec(naked) void tramp_weapon_skin_map()
 {
     __asm {
         // Original: write TYPE to current slot
@@ -100,112 +100,127 @@ __declspec(naked) void weapon_skin_map()
     }
 }
 
-#define ADDR_SKIP_CHAR          0x004F50C1
-#define ADDR_SKIP_CHAR_JE       0x004F50CC
-#define LEN_SKIP_CHAR           7
 
-__declspec(naked) void skip_char_view_tab1()
+// ================== ID:26 — skip_char_view_tab1 ==================
+// CT mantığı:
+// if (tab==1 || tab==5) { call 004F38D0; jmp 004F50D8; }
+// else { jmp 004F50D3; }
+#define ADDR_SKIP_CHAR_PATCH    0x004F50C1  // CE patch noktası
+#define LEN_SKIP_CHAR_PATCH     7           // CE: jmp + 2x NOP
+#define ADDR_SKIP_ELSE_JMP      0x004F50D3  // Tab!=1 && Tab!=5 → buraya
+#define ADDR_SKIP_DO_JMP        0x004F50D8  // call sonrası buraya
+#define ADDR_SKIP_CALL          0x004F38D0  // CE'deki call hedefi
+
+__declspec(naked) void tramp_skip_char_view_tab1_v2()
 {
     __asm {
-        // newmem:
-        // cmp [ebp+2F10],1
-        // mov ecx, ebp
-        // je 004F50CC
-        cmp dword ptr [ebp + 0x2F10], 1
+        cmp dword ptr[ebp + 0x2F10], 1
         mov ecx, ebp
-        jne no_skip
-        mov eax, ADDR_SKIP_CHAR_JE
-        jmp eax
+        je  do_part
+        cmp dword ptr[ebp + 0x2F10], 5
+        mov ecx, ebp
+        je  do_part
 
-    no_skip:
-        // originalcode:
-        // cmp [ebp+2F10],5
-        cmp dword ptr [ebp + 0x2F10], 5
+        // jmp 004F50D3 (register kirletmeden)
+        push ADDR_SKIP_ELSE_JMP
+        ret
 
-        // exit: jmp returnhere (004F50C1 + 7)
-        mov eax, ADDR_SKIP_CHAR
-        add eax, LEN_SKIP_CHAR
-        jmp eax
+        do_part :
+        // call 004F38D0  (MSVC: önce EAX'a al)
+        mov eax, ADDR_SKIP_CALL
+            call eax
+
+            // jmp 004F50D8
+            push ADDR_SKIP_DO_JMP
+            ret
     }
 }
 
-#define ADDR_SHOW_PET           0x004F419E
-#define ADDR_SHOW_PET_JE        0x004F41A7
-#define LEN_SHOW_PET            7
+// ================== ID:27 — show_pet_tab1 ==================
+// CT mantığı:
+// if (tab==1 || tab==5) jmp 004F41A7; else jmp 004F4203;
+#define ADDR_SHOW_PET_PATCH     0x004F419E  // CE patch noktası
+#define LEN_SHOW_PET_PATCH      7           // CE: jmp + 2x NOP
+#define ADDR_SHOW_PET_JE_TGT    0x004F41A7  // Tab==1 || Tab==5 → buraya
+#define ADDR_SHOW_PET_ELSE_JMP  0x004F4203  // Diğerleri → buraya
 
-__declspec(naked) void show_pet_tab1()
+__declspec(naked) void tramp_show_pet_tab1_v2()
 {
     __asm {
-        // newmem:
-        // cmp [esi+2F10],1
-        // je 004F41A7
-        cmp dword ptr [esi + 0x2F10], 1
-        jne no_pet
-        mov eax, ADDR_SHOW_PET_JE
-        jmp eax
+        cmp dword ptr[esi + 0x2F10], 1
+        je  do_pet
+        cmp dword ptr[esi + 0x2F10], 5
+        je  do_pet
 
-    no_pet:
-        // originalcode:
-        // cmp [esi+2F10],5
-        cmp dword ptr [esi + 0x2F10], 5
+        // jmp 004F4203
+        push ADDR_SHOW_PET_ELSE_JMP
+        ret
 
-        // exit: jmp returnhere (004F419E + 7)
-        mov eax, ADDR_SHOW_PET
-        add eax, LEN_SHOW_PET
-        jmp eax
+        do_pet :
+        // jmp 004F41A7
+        push ADDR_SHOW_PET_JE_TGT
+            ret
     }
 }
 
+// ================== ID:13 — show_mount_tab1 ==================
+// CT mantığı (özet):
+// mov [esi+E350],eax
+// if (tab==1) load_mount();
+// else if (tab==5) jmp 004F4272;
+// else load_mount();
+//
+// load_mount():
+//   mov ecx,[edi+90]; xor edx,edx; push ecx; [esp+2C]=0xFF; push edx; mov ecx,eax; call 0043A060; jmp 004F428C;
+#define ADDR_SHOW_MOUNT_PATCH   0x004F426C  // CE patch noktası
+#define LEN_SHOW_MOUNT_PATCH    6           // CE: jmp + 1x NOP
+#define ADDR_MOUNT_CALL         0x0043A060  // CE'deki call
+#define ADDR_MOUNT_SUCCESS_JMP  0x004F428C  // yükleme sonrası
+#define ADDR_MOUNT_TAB5_JMP     0x004F4272  // Tab==5 → buraya
 
-#define ADDR_SHOW_MOUNT         0x004F426C
-#define ADDR_MOUNT_SUCCESS      0x004F428C
-#define ADDR_MOUNT_ELSE         0x004F4272
-#define ADDR_CALL_MOUNT         0x0043A060
-#define LEN_SHOW_MOUNT          6
-
-__declspec(naked) void show_mount_tab1()
+__declspec(naked) void tramp_show_mount_tab1_v2()
 {
     __asm {
-        // originalcode (ilk satır CE'de de böyle başlıyor)
-        mov [esi + 0xE350], eax
+        // CE: originalcode ilk satır
+        mov[esi + 0xE350], eax
 
-        // Tab1 ise mount akışını çağır → 004F428C
-        cmp dword ptr [esi + 0x2F10], 1
-        jne jnepart
+        // Tab==1 → load_mount
+        cmp dword ptr[esi + 0x2F10], 1
+        je  load_mount
+        // Tab==5 → 004F4272
+        cmp dword ptr[esi + 0x2F10], 5
+        je  tab5_path
 
+
+        load_mount :
         mov ecx, [edi + 0x90]
-        xor edx, edx
-        push ecx
-        mov byte ptr [esp + 0x2C], 0xFF   // -1
-        push edx
-        mov ecx, eax
-        mov eax, ADDR_CALL_MOUNT
-        call eax
+            xor edx, edx
+            push ecx
+            mov byte ptr[esp + 0x2C], 0xFF   // -1
+            push edx
+            mov ecx, eax
 
-        mov eax, ADDR_MOUNT_SUCCESS
-        jmp eax
 
-    jnepart:
-        // Tab1 değilse default yol → 004F4272
-        cmp dword ptr [esi + 0x2F10], 5
-        mov eax, ADDR_MOUNT_ELSE
-        jmp eax
+            mov eax, ADDR_MOUNT_CALL
+            call eax
+
+            // jmp 004F428C
+            push ADDR_MOUNT_SUCCESS_JMP
+            ret
+
+            tab5_path :
+        // jmp 004F4272
+        push ADDR_MOUNT_TAB5_JMP
+            ret
     }
 }
 
 void Itemmall()
 {
-    // HOOK #1 — type write + weapon skin map
-    utils::Hook((LPVOID)ADDR_HOOK_TYPEWRITE, weapon_skin_map, 5);
 
+    utils::Hook((LPVOID)ADDR_HOOK_TYPEWRITE, tramp_weapon_skin_map, 5);
     utils::PatchByte((void*)0x004F4210, 0xEB);
-
-    // HOOK #2 — skip_char_view_tab1
-    utils::Hook((LPVOID)ADDR_SKIP_CHAR,  skip_char_view_tab1,  LEN_SKIP_CHAR);
-
-    // HOOK #3 — show_pet_tab1
-    utils::Hook((LPVOID)ADDR_SHOW_PET,   show_pet_tab1,       LEN_SHOW_PET);
-
-    // HOOK #4 — show_mount_tab1
-    utils::Hook((LPVOID)ADDR_SHOW_MOUNT, show_mount_tab1,     LEN_SHOW_MOUNT);
+    utils::Hook((LPVOID)ADDR_SKIP_CHAR_PATCH, tramp_skip_char_view_tab1_v2, LEN_SKIP_CHAR_PATCH);
+    utils::Hook((LPVOID)ADDR_SHOW_PET_PATCH, tramp_show_pet_tab1_v2, LEN_SHOW_PET_PATCH);
+    utils::Hook((LPVOID)ADDR_SHOW_MOUNT_PATCH, tramp_show_mount_tab1_v2, LEN_SHOW_MOUNT_PATCH);
 }
