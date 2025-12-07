@@ -1,9 +1,8 @@
-﻿#include <hook.h>
+﻿#include "hook.h"
 
 // ===== Addresses (same as your working build) =====
 #define ADDR_HOOK_TYPEWRITE      0x004F4224 
-#define ADDR_HOOK_REFRESHBEFORE  0x004F4319 
-
+#define ADDR_HOOK_RETN           5
 #define RET1_JL                  0x004F4170 
 #define RET1_END                 0x004F42F8 
 
@@ -25,16 +24,12 @@ __declspec(align(1)) static unsigned char g_mapLight[16] =
 __declspec(align(1)) static unsigned char g_mapFury[16] =
 { 0, 45,46,47,48,49,52,54,56,57,58,59,61,63,59,65 };
 
-__declspec(naked) void tramp_weapon_skin_map()
+__declspec(naked) void weapon_skin_map()
 {
     __asm {
-        // Original: write TYPE to current slot
-        movzx edx, byte ptr[esp + 0x30]                 // DL = type
-        mov   ecx, dword ptr[esi + OFF_PREVIEW_BASE]    // base
-        movzx eax, bl                                   // slot
-        mov   byte ptr[ecx + eax + OFF_TYPE], dl        // [+1A8 + slot] = type
 
-        // Only type 151 → map & write to weapon-skin slot
+        movzx edx, byte ptr[esp + 0x30]                 // DL = type
+
         cmp   dl, 151
         jne   after_force
 
@@ -64,52 +59,98 @@ __declspec(naked) void tramp_weapon_skin_map()
         lea   ecx, g_mapLight
         mov   dl, byte ptr[ecx + edx]
         jmp   have_type
-    use_fury:
+        use_fury :
         lea   ecx, g_mapFury
-        mov   dl, byte ptr[ecx + edx]
-    have_type:
-        // Write mapped TYPE/ID to weapon-skin slot
-        mov   ecx, dword ptr[esi + OFF_PREVIEW_BASE]
-        mov   eax, edi                                  // AL = X
-        mov   byte ptr[ecx + OFF_WPN_TYPE], dl
-        mov   byte ptr[ecx + OFF_WPN_ID],   al
+            mov   dl, byte ptr[ecx + edx]
+            have_type :
+            // Write mapped TYPE/ID to weapon-skin slot
+            mov   ecx, dword ptr[esi + OFF_PREVIEW_BASE]
+            mov   eax, edi                                  // AL = X
+            mov   byte ptr[ecx + OFF_WPN_TYPE], dl
+            mov   byte ptr[ecx + OFF_WPN_ID], al
 
-    restore:
+            restore :
         pop   esi
-        pop   ebx
+            pop   ebx
 
-    after_force:
-        // Original: write TYPEID to current slot & loop
-        movzx edx, byte ptr[esp + 0x18]                 // DL = typeId
-        mov   ecx, dword ptr[esi + OFF_PREVIEW_BASE]
-        mov   byte ptr[ecx + eax + OFF_ID], dl          // [+1B9 + slot] = id
+            after_force :
+        mov ecx, dword ptr[esi + OFF_PREVIEW_BASE]
+            movzx eax, bl                              // slot index
+            mov   byte ptr[ecx + eax + OFF_TYPE], dl   // TYPE → [1A8+slot]
+            movzx edx, byte ptr[esp + 0x18]            // DL = typeId
+            mov   byte ptr[ecx + eax + OFF_ID], dl     // ID   → [1B9+slot]
 
-        mov   byte ptr[esp + 0x17], 1
-        mov   eax, dword ptr[esp + 0x1C]
-        inc   eax
-        add   ebp, 4
-        cmp   eax, 18
-        mov   dword ptr[esp + 0x1C], eax
-        jl    short GO_JL
-
-        mov   eax, RET1_END
-        jmp   eax
-    GO_JL:
+            // loop/counters (original)
+            mov   byte ptr[esp + 0x17], 1
+            mov   eax, dword ptr[esp + 0x1C]
+            inc   eax
+            add   ebp, 4
+            cmp   eax, 18
+            mov   dword ptr[esp + 0x1C], eax
+            jl    short GO_JL_NORMAL
+            mov   eax, RET1_END
+            jmp   eax
+            GO_JL_NORMAL :
         mov   eax, RET1_JL
-        jmp   eax
+            jmp   eax
     }
 }
 
 
-// ================== ID:26 — skip_char_view_tab1 ==================
-// CT mantığı:
-// if (tab==1 || tab==5) { call 004F38D0; jmp 004F50D8; }
-// else { jmp 004F50D3; }
-#define ADDR_SKIP_CHAR_PATCH    0x004F50C1  // CE patch noktası
-#define LEN_SKIP_CHAR_PATCH     7           // CE: jmp + 2x NOP
-#define ADDR_SKIP_ELSE_JMP      0x004F50D3  // Tab!=1 && Tab!=5 → buraya
-#define ADDR_SKIP_DO_JMP        0x004F50D8  // call sonrası buraya
-#define ADDR_SKIP_CALL          0x004F38D0  // CE'deki call hedefi
+#define ADDR_HOOK_NEW_COS      0x4F4319 
+#define REFRESH_CALL_189F0     0x418BB0 
+#define REFRESH_CONT_5AE4      0x4F4324 
+#define ADDR_HOOK_NEW_COS_LEN  6
+
+#define SRC_COS_ID_0090E2FA    0x90E2FA   // AL = *(byte*)0x0090E2FA
+#define SRC_COS_TYPE_0090E2F9  0x90E2F9   // BL = *(byte*)0x0090E2F9
+
+
+__declspec(naked) void tramp_newcos()
+{
+    __asm {
+
+        pushfd
+        pushad
+
+        // base = [esi + 0xE34C]
+        mov   edx, dword ptr[esi + OFF_PREVIEW_BASE]
+
+
+        mov   eax, SRC_COS_ID_0090E2FA
+        mov   al, byte ptr[eax]
+        test  al, al
+        jz    skip_write_id
+        mov   byte ptr[edx + OFF_ID], al          // [+1B9]
+        skip_write_id :
+
+
+        mov   eax, SRC_COS_TYPE_0090E2F9
+            mov   bl, byte ptr[eax]
+            test  bl, bl
+            jz    done_write
+            mov   byte ptr[edx + OFF_TYPE], bl        // [+1A8]
+            done_write :
+
+
+        popad
+            popfd
+
+
+            mov   ecx, dword ptr[esi + OFF_PREVIEW_BASE]
+            mov   eax, REFRESH_CALL_189F0
+            call  eax
+            mov   eax, REFRESH_CONT_5AE4
+            jmp   eax
+    }
+}
+
+
+#define ADDR_SKIP_CHAR_PATCH    0x4F50C1
+#define LEN_SKIP_CHAR_PATCH     7           
+#define ADDR_SKIP_ELSE_JMP      0x4F50D3
+#define ADDR_SKIP_DO_JMP        0x4F50D8
+#define ADDR_SKIP_CALL          0x4F38D0
 
 __declspec(naked) void tramp_skip_char_view_tab1_v2()
 {
@@ -136,13 +177,12 @@ __declspec(naked) void tramp_skip_char_view_tab1_v2()
     }
 }
 
-// ================== ID:27 — show_pet_tab1 ==================
-// CT mantığı:
-// if (tab==1 || tab==5) jmp 004F41A7; else jmp 004F4203;
-#define ADDR_SHOW_PET_PATCH     0x004F419E  // CE patch noktası
-#define LEN_SHOW_PET_PATCH      7           // CE: jmp + 2x NOP
-#define ADDR_SHOW_PET_JE_TGT    0x004F41A7  // Tab==1 || Tab==5 → buraya
-#define ADDR_SHOW_PET_ELSE_JMP  0x004F4203  // Diğerleri → buraya
+
+#define ADDR_SHOW_PET_PATCH     0x4F419E
+#define LEN_SHOW_PET_PATCH      7           
+#define ADDR_SHOW_PET_JE_TGT    0x4F41A7
+#define ADDR_SHOW_PET_ELSE_JMP  0x4F4203
+
 
 __declspec(naked) void tramp_show_pet_tab1_v2()
 {
@@ -163,20 +203,12 @@ __declspec(naked) void tramp_show_pet_tab1_v2()
     }
 }
 
-// ================== ID:13 — show_mount_tab1 ==================
-// CT mantığı (özet):
-// mov [esi+E350],eax
-// if (tab==1) load_mount();
-// else if (tab==5) jmp 004F4272;
-// else load_mount();
-//
-// load_mount():
-//   mov ecx,[edi+90]; xor edx,edx; push ecx; [esp+2C]=0xFF; push edx; mov ecx,eax; call 0043A060; jmp 004F428C;
-#define ADDR_SHOW_MOUNT_PATCH   0x004F426C  // CE patch noktası
-#define LEN_SHOW_MOUNT_PATCH    6           // CE: jmp + 1x NOP
-#define ADDR_MOUNT_CALL         0x0043A060  // CE'deki call
-#define ADDR_MOUNT_SUCCESS_JMP  0x004F428C  // yükleme sonrası
-#define ADDR_MOUNT_TAB5_JMP     0x004F4272  // Tab==5 → buraya
+
+#define ADDR_SHOW_MOUNT_PATCH   0x4F426C
+#define LEN_SHOW_MOUNT_PATCH    6          
+#define ADDR_MOUNT_CALL         0x43A060  
+#define ADDR_MOUNT_SUCCESS_JMP  0x4F428C 
+#define ADDR_MOUNT_TAB5_JMP     0x4F4272
 
 __declspec(naked) void tramp_show_mount_tab1_v2()
 {
@@ -193,7 +225,7 @@ __declspec(naked) void tramp_show_mount_tab1_v2()
 
 
         load_mount :
-            mov ecx, [edi + 0x90]
+        mov ecx, [edi + 0x90]
             xor edx, edx
             push ecx
             mov byte ptr[esp + 0x2C], 0xFF   // -1
@@ -215,12 +247,13 @@ __declspec(naked) void tramp_show_mount_tab1_v2()
     }
 }
 
+
 void Itemmall()
 {
-
-    utils::Hook((LPVOID)ADDR_HOOK_TYPEWRITE, tramp_weapon_skin_map, 5);
     utils::PatchByte((void*)0x004F4210, 0xEB);
+    utils::Hook((LPVOID)ADDR_HOOK_TYPEWRITE, weapon_skin_map, ADDR_HOOK_RETN);
     utils::Hook((LPVOID)ADDR_SKIP_CHAR_PATCH, tramp_skip_char_view_tab1_v2, LEN_SKIP_CHAR_PATCH);
     utils::Hook((LPVOID)ADDR_SHOW_PET_PATCH, tramp_show_pet_tab1_v2, LEN_SHOW_PET_PATCH);
     utils::Hook((LPVOID)ADDR_SHOW_MOUNT_PATCH, tramp_show_mount_tab1_v2, LEN_SHOW_MOUNT_PATCH);
+    utils::Hook((LPVOID)ADDR_HOOK_NEW_COS, tramp_newcos, ADDR_HOOK_NEW_COS_LEN);
 }
