@@ -8,8 +8,8 @@ namespace {
     // Oyun adresleri / dönüşler
     constexpr DWORD ADDR_MOUSE_X = 0x7C3C0C;
     constexpr DWORD ADDR_MOUSE_Y = 0x7C3C10;
-    constexpr DWORD RET_MOUSE_TR = 0x004D73F8; // hook @ 0x004D73ED (len 11)
-    constexpr DWORD RET_NEWLOC_TR = 0x004D7509; // hook @ 0x004D7503 (len 6)
+    constexpr DWORD RET_MOUSE_TR = 0x004D73F8; 
+    constexpr DWORD RET_NEWLOC_TR = 0x004D7509; 
 
     // Konum durumu
     volatile int gLocX = 0;

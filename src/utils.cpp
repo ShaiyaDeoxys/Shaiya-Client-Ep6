@@ -1,7 +1,5 @@
 #include <hook.h>
 
-
-
 namespace utils {
 
     void MemWrite(void* addr, const void* data, size_t len) {

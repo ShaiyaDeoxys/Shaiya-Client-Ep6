@@ -1,5 +1,13 @@
 # Client DLL
 
+# For Essiantals Game.exe
+
+* New Resolutions
+* New slots and dds loading
+* Buff pos with shift moving
+* Itemmall shows mounts and weapon skins
+
+
 ## Dependencies
 - Microsoft Detours 4.x  
   - The project is configured to look for Detours under `external/detours`.

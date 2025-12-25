@@ -12,7 +12,7 @@
 
 DWORD orderNewResReturn = 0x521586;
 
-__declspec(dllexport) __declspec(naked) void orderNewRes() {
+__declspec(naked) void orderNewRes() {
     __asm {
         mov dword ptr ds : [0x022B03D8] , RES_IDX_3440_1440
         jmp orderNewResReturn
@@ -22,7 +22,7 @@ __declspec(dllexport) __declspec(naked) void orderNewRes() {
 
 DWORD renderOptionRessLoginReturn = 0x51AF01;
 
-__declspec(dllexport) __declspec(naked) void renderOptionRessLogin() {
+__declspec(naked) void renderOptionRessLogin() {
     __asm {
         cmp dword ptr ds : [0x7AB0E8] , 1366
         je is1366
@@ -84,7 +84,7 @@ __declspec(dllexport) __declspec(naked) void renderOptionRessLogin() {
 
 DWORD renderOptionRessLoginReturn2 = 0x51AEDB; 
 
-__declspec(dllexport) __declspec(naked) void renderOptionRessLogin2() {
+__declspec(naked) void renderOptionRessLogin2() {
     __asm {
         cmp dword ptr ds : [0x007AB0E8] , 1366
         je is1366
@@ -153,7 +153,7 @@ DWORD renderNewResReturn = 0x51E869;
 DWORD isContinueAddrJmp = 0x51E872;
 
 
-__declspec(dllexport) __declspec(naked) void renderNewRes() {
+__declspec(naked) void renderNewRes() {
     __asm {
         // 1) Yeni çözünürlük ID’leri
         mov dword ptr ds : [0x022B03D8] , RES_IDX_1366_768    // index 14
@@ -269,7 +269,7 @@ __declspec(dllexport) __declspec(naked) void renderNewRes() {
 // ----------------------------------------------------
 DWORD alterLimitResReturn = 0x51E84F;
 
-__declspec(dllexport) __declspec(naked) void alterLimitRes() {
+__declspec(naked) void alterLimitRes() {
     __asm {
         mov dword ptr ds : [0x007ADEB4] , 21   // 0..20
         mov ecx, dword ptr ds : [0x007ADEB4]
@@ -303,7 +303,7 @@ DWORD return_addr = 0x0051B696;
 #define INI_SIZE_Y 0x00746E28  // "SIZE_Y"
 
 
-__declspec(dllexport) __declspec(naked) void setNewRes() {
+__declspec(naked) void setNewRes() {
     __asm {
         // Yeni indexler: 14..20
         cmp eax, RES_IDX_1366_768
@@ -468,7 +468,7 @@ DWORD is3840addr = 0x54F894;
 DWORD isOriginaladdr = 0x54F849;
 DWORD setAdjustInterfaceReturn = 0x54F779;
 
-__declspec(dllexport) __declspec(naked) void setAdjustInterface() {
+__declspec(naked) void setAdjustInterface() {
     __asm {
         cmp eax, 0x0E
         je  is1366jmp
@@ -511,7 +511,7 @@ DWORD is3840_addr = 0x54F2F5;
 DWORD isOriginal_addr = 0x54F59B;
 DWORD setAdjustInterface2Return = 0x54F1DA;
 
-__declspec(dllexport) __declspec(naked) void setAdjustInterface2() {
+__declspec(naked) void setAdjustInterface2() {
     __asm {
         cmp eax, 0x0E
         je  is1366jmp
@@ -554,7 +554,7 @@ DWORD is3840_addr2 = 0x495EC0;
 DWORD isOriginal_addr2 = 0x49650D;
 DWORD setAdjustInterface3Return = 0x4954EA;
 
-__declspec(dllexport) __declspec(naked) void setAdjustInterface3() {
+__declspec(naked) void setAdjustInterface3() {
     __asm {
         cmp eax, 0x0E
         je  is1366jmp
@@ -599,7 +599,7 @@ DWORD is1400_addr3 = 0x494D80;
 DWORD isOriginal_addr3 = 0x494D90;
 DWORD setAdjustInterface4Return = 0x494D52;
 
-__declspec(dllexport) __declspec(naked) void setAdjustInterface4() {
+__declspec(naked) void setAdjustInterface4() {
     __asm {
         cmp eax, 0x0E
         je  is1366jmp
@@ -638,7 +638,7 @@ DWORD is1400_addr4 = 0x4942FE;
 DWORD isOriginal_addr4 = 0x494A82;
 DWORD setAdjustInterface5Return = 0x493450;
 
-__declspec(dllexport) __declspec(naked) void setAdjustInterface5() {
+__declspec(naked) void setAdjustInterface5() {
     __asm {
         cmp eax, 0x0E
         je  is1366jmp
@@ -675,7 +675,7 @@ __declspec(dllexport) __declspec(naked) void setAdjustInterface5() {
 
 DWORD alterLimitOkReturn = 0x51D742;
 
-__declspec(dllexport) __declspec(naked) void alterLimitOk() {
+__declspec(naked) void alterLimitOk() {
     __asm {
         mov dword ptr ds : [0x007ADEB4] , 21
         jmp alterLimitOkReturn
@@ -686,7 +686,7 @@ __declspec(dllexport) __declspec(naked) void alterLimitOk() {
 DWORD isSaveResReturn = 0x40659B;
 DWORD isSaveContinue = 0x406774;
 
-__declspec(dllexport) __declspec(naked) void isSaveRes() {
+__declspec(naked) void isSaveRes() {
     __asm {
         cmp ecx, 1366
         je  isSave1366
